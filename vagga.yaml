@@ -1,0 +1,129 @@
+containers:
+  ubuntu-jvm:
+    setup:
+    - !Ubuntu xenial
+    - !UbuntuUniverse
+
+    - !Sh "whoami"
+    - !Sh "echo HOME: $HOME"
+    - !Sh "pwd"
+
+    - !CacheDirs
+      /var/cache/oracle-jdk8-installer: jvm-installer-cache
+      /tmp/.m2: maven-cache
+      /tmp/.cargo: cargo-cache
+      /tmp/.rustup: rustup-cache
+    - !EnsureDir /root/.m2
+    - !EnsureDir /root/.cargo
+    - !EnsureDir /root/.rustup
+    - !Sh "ln -s ./.rustup /root/.multirust"
+
+#    - !AptTrust keys: [A82B7A83D88C9A39DDEF81B729226849E7E01756]
+#    - !UbuntuPPA giskou/librocksdb
+
+#    - !AptTrust keys: [136221EE520DDFAF0A905689B9316A7BC7917B12]
+#    - !UbuntuPPA chris-lea/libsodium
+
+    - !BuildDeps [curl, ca-certificates, wget]
+#    - !BuildDeps [mc]
+    - !Install [build-essential, git, libssl-dev, pkg-config]
+#    - !Install [librocksdb-dev, libsnappy-dev]
+
+    - !Sh |
+        export SODIUM_VERS="1.0.16"
+        export HOME="/root"
+        export PREFIX="/usr"
+        # export PREFIX="$HOME/.local"
+        # export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$PREFIX/lib/pkgconfig
+
+        if [ ! -f "$PREFIX/lib/libsodium.a" ]; then
+            cd /tmp
+            wget "https://github.com/jedisct1/libsodium/releases/download/$SODIUM_VERS/libsodium-$SODIUM_VERS.tar.gz" -t 5 -O "libsodium.tar.gz"
+            tar xvf libsodium.tar.gz
+            cd libsodium-$SODIUM_VERS
+            ./configure --prefix=$PREFIX
+            make
+            make install
+            cd
+        fi
+
+    - !Sh "curl https://sh.rustup.rs -sSf | sh -s -- -y"
+    - !Sh "cat /tmp/.profile >> /root/.profile"
+    - !Sh "cat /root/.profile"
+
+#    - !Sh "rustup toolchain install nightly"
+
+    - !AptTrust keys: [7B2C3B0889BF5709A105D03AC2518248EEA14886]
+    - !UbuntuPPA webupd8team/java
+    - !Sh "echo debconf shared/accepted-oracle-license-v1-1 select true | debconf-set-selections"
+    - !Sh "echo debconf shared/accepted-oracle-license-v1-1 seen true | debconf-set-selections"
+    - !Install [oracle-java8-installer]
+    - !Cmd ["update-alternatives", "--config", "java"]
+#    - !Install [maven]
+
+#    - !Sh |
+#        export MAVEN_VERS="3.5.3"
+#        export HOME="/root"
+#        export PREFIX="/usr"
+#        # export PREFIX="$HOME/apache-maven"
+#        # export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$PREFIX/lib/pkgconfig
+#
+#        if [ "$(mvn --version)" != "Apache Maven ${MAVEN_VERS}"* ]; then
+#            cd /tmp
+#            wget "http://www-us.apache.org/dist/maven/maven-3/${MAVEN_VERS}/binaries/apache-maven-${MAVEN_VERS}-bin.tar.gz" -t 5 -O "apache-maven.tar.gz"
+#            tar xvf apache-maven.tar.gz
+#            rm apache-maven.tar.gz
+#            mv apache-maven-${MAVEN_VERS} /opt/apache-maven
+#            rm -f /etc/profile.d/maven.sh
+#            echo "#!/usr/bin/env bash" >> /etc/profile.d/maven.sh
+#            echo "export M2_HOME=/opt/apache-maven" >> /etc/profile.d/maven.sh
+#            echo "export MAVEN_HOME=/opt/apache-maven" >> /etc/profile.d/maven.sh
+#            echo "export PATH=\${M2_HOME}/bin:\${PATH}" >> /etc/profile.d/maven.sh
+#            chmod +rx /etc/profile.d/maven.sh
+#            cd
+#            SOURCE=". /etc/profile.d/maven.sh"
+#            if [ ! "$(cat ~/.profile | grep '${SOURCE}')" ]; then
+#              echo ${SOURCE} >> ~/.profile
+#            fi
+#        fi
+
+    volumes:
+      /root/.m2: !CacheDir maven-cache
+      /root/.cargo: !CacheDir cargo-cache
+      /root/.rustup: !CacheDir rustup-cache
+      /tmp: !Tmpfs
+        size: 3Gi
+        mode: 0o1777
+      /run: !Tmpfs
+        size: 100Mi
+        mode: 0o0755
+
+    environ:
+#      ROCKSDB_LIB_DIR: "/usr/lib/x86_64-linux-gnu"
+#      SNAPPY_LIB_DIR: "/usr/lib/x86_64-linux-gnu"
+      SODIUM_LIB_DIR: "/usr/lib"
+      TERM: "xterm-256color"
+
+commands:
+  _pre: !Command
+    description: Pre
+    container: ubuntu-jvm
+    run: |
+        echo "===[ Start ]==================================================================="
+
+  bash: !Command
+    description: Run bash
+    container: ubuntu-jvm
+#    prerequisites: [_pre]
+    run: |
+        set -ex
+        set
+        export HOME="/root"
+        . ~/.profile
+        bash
+
+  run: !Command
+    description: Run local_frame overflow check
+    container: ubuntu-jvm
+#    prerequisites: [_pre]
+    run: ./capacity_overflow.sh
