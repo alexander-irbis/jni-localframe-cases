@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+. ~/.profile
+
 export RUST_LIB_DIR=$(rustup run stable rustc --print sysroot)/lib
 export JAVA_HOME="${JAVA_HOME:-$(mvn --version | grep 'Java home' | sed 's/.*: //')}"
 export JAVA_LIB_DIR="$(find ${JAVA_HOME} -type f -name libjvm.\* | xargs -n1 dirname)"
