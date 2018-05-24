@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+export HOME="${HOME:-/root}"
+
 . ~/.profile
 
 export RUST_LIB_DIR=$(rustup run stable rustc --print sysroot)/lib

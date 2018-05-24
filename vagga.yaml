@@ -4,9 +4,12 @@ containers:
     - !Ubuntu xenial
     - !UbuntuUniverse
 
-    - !Sh "whoami"
-    - !Sh "echo HOME: $HOME"
-    - !Sh "pwd"
+    - !Sh |
+        echo "------------------------------------------------------------------------------"
+        whoami
+        export TERM="xterm-256color"
+        env
+        echo "------------------------------------------------------------------------------"
 
     - !CacheDirs
       /var/cache/oracle-jdk8-installer: jvm-installer-cache
@@ -16,7 +19,10 @@ containers:
     - !EnsureDir /root/.m2
     - !EnsureDir /root/.cargo
     - !EnsureDir /root/.rustup
-    - !Sh "ln -s ./.rustup /root/.multirust"
+    - !Sh |
+        rm -rf /tmp/.cargo/*
+        rm -rf /tmp/.rustup/*
+        ln -s ./.rustup /root/.multirust
 
 #    - !AptTrust keys: [A82B7A83D88C9A39DDEF81B729226849E7E01756]
 #    - !UbuntuPPA giskou/librocksdb
@@ -30,8 +36,8 @@ containers:
 #    - !Install [librocksdb-dev, libsnappy-dev]
 
     - !Sh |
-        export SODIUM_VERS="1.0.16"
         export HOME="/root"
+        export SODIUM_VERS="1.0.16"
         export PREFIX="/usr"
         # export PREFIX="$HOME/.local"
         # export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$PREFIX/lib/pkgconfig
@@ -47,9 +53,11 @@ containers:
             cd
         fi
 
-    - !Sh "curl https://sh.rustup.rs -sSf | sh -s -- -y"
-    - !Sh "cat /tmp/.profile >> /root/.profile"
-    - !Sh "cat /root/.profile"
+    - !Sh |
+        env
+        curl https://sh.rustup.rs -sSf | sh -s -- -y
+        cat /tmp/.profile >> /root/.profile
+        cat /root/.profile
 
 #    - !Sh "rustup toolchain install nightly"
 
@@ -59,7 +67,7 @@ containers:
     - !Sh "echo debconf shared/accepted-oracle-license-v1-1 seen true | debconf-set-selections"
     - !Install [oracle-java8-installer]
     - !Cmd ["update-alternatives", "--config", "java"]
-#    - !Install [maven]
+    - !Install [maven]
 
 #    - !Sh |
 #        export MAVEN_VERS="3.5.3"
