@@ -1,0 +1,7 @@
+[package]
+name = "jni-localframe-cases"
+version = "0.1.0"
+authors = ["Alexander Irbis <irbis.labs@gmail.com>"]
+
+[dependencies]
+jni = { version = "0.10", features = ["invocation"] }
