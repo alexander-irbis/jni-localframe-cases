@@ -9,7 +9,10 @@ pub fn create_vm(debug: bool) -> JavaVM {
     let mut jvm_args_builder = InitArgsBuilder::new().version(JNIVersion::V8);
 
     if debug {
-        jvm_args_builder = jvm_args_builder.option("-Xcheck:jni").option("-Xdebug");
+        jvm_args_builder = jvm_args_builder
+            .option("-Xcheck:jni")
+            .option("-Xmx1024m")
+            .option("-Xdebug");
     }
 
     let jvm_args = jvm_args_builder.build().unwrap_or_else(

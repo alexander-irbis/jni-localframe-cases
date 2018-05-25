@@ -29,26 +29,25 @@ fn frame_overflow() {
             strings.push(java_string);
             println!(" Ok.");
         }
-        strings
-            .into_iter()
-            .enumerate()
-            .map(|(i, java_string)| {
-                let java_string: String = env.get_string(java_string)
-                    .expect("Can't get object.")
-                    .into();
-                let number_string = format!("{}", i + 1);
-                assert_eq!(java_string, number_string);
-            });
+        for (i, java_string) in strings.into_iter().enumerate() {
+            let java_string: String = env.get_string(java_string)
+                .expect("Can't get object.")
+                .into();
+            let number_string = format!("{}", i + 1);
+            assert_eq!(java_string, number_string);
+        };
         Ok(JObject::null())
     }).unwrap();
 }
 
 #[test]
 fn memory_overflow() {
-    const FRAME_SIZE: i32 = 0;
-    const ITER_NUM: usize = 1024;
+    // 12 * 256Mb = 3Gb.
+    // -Xmx sets the heap limit as 1Gb
+    const ITER_NUM: usize = 12;
     const ARRAY_NUM: usize = 256;
     const ARRAY_SIZE: usize = 1024 * 1024;
+    const FRAME_SIZE: i32 = 0;
 
     let mut big_array = vec![0_u8; ARRAY_SIZE];
 
@@ -56,7 +55,7 @@ fn memory_overflow() {
     for n in 0..ITER_NUM {
         thread_rng().fill(&mut big_array[..]);
         env.with_local_frame(FRAME_SIZE, || {
-            for i in 1..=ARRAY_NUM {
+            for _ in 1..=ARRAY_NUM {
                 let _java_obj = env.byte_array_from_slice(&big_array).expect(
                     "Can't create new local object.",
                 );
