@@ -134,4 +134,4 @@ commands:
     description: Run local_frame overflow check
     container: ubuntu-jvm
 #    prerequisites: [_pre]
-    run: ./capacity_overflow.sh
+    run: ./capacity.sh
