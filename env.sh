@@ -13,4 +13,3 @@ export LD_LIBRARY_PATH=$JAVA_LIB_DIR:$RUST_LIB_DIR
 
 env
 
-cargo run --example capacity_overflow
